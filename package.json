@@ -1,0 +1,11 @@
+{
+    "name": "snadboy",
+    "version": "0.1.0",
+    "description": "SnadBoy node-red nodes",
+    "node-red": {
+        "nodes": {
+            "sbha": "sbha.js",
+            "sbmotion": "sbmotion.js"
+        }
+    }
+}

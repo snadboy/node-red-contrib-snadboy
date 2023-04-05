@@ -1,0 +1,213 @@
+<style>
+    .select2-container .select2-selection--single .select2-selection__rendered {
+        font-family: "Roboto", "Helvetica Neue", sans-serif;
+        font-size: 14px;
+    }
+
+    .select2-results__option {
+        font-family: "Roboto", "Helvetica Neue", sans-serif;
+        font-size: 14px;
+    }
+</style>
+
+<script type="text/x-red" data-template-name="sbmotion">
+  <div class="form-row">
+    <label for="node-input-name">
+      <i class="fa fa-tag"></i> Name
+    </label>
+    <input type="text" id="node-input-name" placeholder="Name">
+  </div>
+  <div class="form-row">
+    <label for="node-input-sbhaId">
+      <i class="fa fa-cogs"></i> SB Home Assistant
+    </label>
+    <input type="text" id="node-input-sbhaId">
+  </div>
+  <div class="form-row">
+    <label for="node-input-motion">
+      <i class="fa fa-eye"></i> Motion Sensor
+    </label>
+    <select id="node-input-motion"></select>
+    <!-- <br><br><br><br><br><br>
+    <button id="node-motion-reload">Reload</button> -->
+  </div>
+  <!-- <div class="form-row">
+    <label for="node-input-entities"><i class="fa fa-list"></i> Input Entities</label>
+    <select id="node-input-entities"></select>
+  </div> -->
+</script>
+
+<script type="text/javascript">
+    (function () {
+        // const node = this;
+
+        RED.nodes.registerType('sbmotion', {
+            category: 'input',
+            color: '#E9967A',
+            defaults: {
+                name: { value: '' },
+                sbhaId: { value: '', type: 'sbha', required: true, default: '' },
+                motion: { value: '' }
+            },
+            inputs: 0,
+            outputs: 1,
+            icon: 'font-awesome/fa-eye',
+            label: function () {
+                return this.name || 'SB Motion';
+            },
+            oneditok: function () {
+                return true;
+            },
+            oneditsave: function () {
+                this.motion = $('#node-input-motion').val();
+                this.sbhaId = $('#node-input-sbhaId').val();
+                this.name = $('#node-input-name').val();
+            },
+
+            oneditprepare: async function () {
+                try {
+                    debugger;
+
+                    const node = this;
+
+                    node.inputMotion = $('#node-input-motion');
+                    node.motionReload = $('#node-motion-reload');
+                    node.inputSbhaId = $('#node-input-sbhaId');
+
+                    node.nodeSbha = () => RED.nodes.node(node.inputSbhaId.val());
+                    node.loadMotionEntities = async () => await loadEntities(node.nodeSbha(), node.inputMotion, 'device_class', ['motion', 'occupancy']);
+
+                    // loadEntities(this.nodeSbha(), this.inputMotion(), 'device_class', ['motion', 'occupancy']);
+                    await node.loadMotionEntities();
+
+                    node.motionReload.click(async () => await node.loadMotionEntities());
+
+                    edlist(node.nodeSbha());
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+        });
+
+        async function loadEntities(sbhaNode, selectEntity, filterType, filterValues = []) {
+            const fetchEntityList = async function (sbhaNode, filterType, filterValues = []) {
+                if (!Array.isArray(filterValues))
+                    filterValues = [filterValues];
+
+                if (!sbhaNode)
+                    return [];
+
+                try {
+                    let url = `${RED.settings.httpAdminRoot || ''}/sbha/${sbhaNode.id}/getEntityList/${filterType}`;
+                    filterValues.forEach((value, number, array) => url += `/${value}`)
+                    const response = await fetch(url);
+                    return await response.json();
+                } catch (e) {
+                    console.log(e);
+                    return [];
+                }
+            }
+
+            // Fetch the entities from the SB Home Assistant node
+            const entities = await fetchEntityList(sbhaNode, filterType, filterValues);
+
+            // Get the currently selected entity ID
+            const selectedEntityId = selectEntity.val();
+
+            // Remove any existing options from the Entity ID select element
+            selectEntity.empty();
+
+            // Sort the entities by .text and add them to selectJquery
+            entities
+                .sort((a, b) => a.text < b.text ? -1 : a.text > b.text ? 1 : 0)
+                .forEach(entity =>
+                    selectEntity.append($('<option>', {
+                        value: entity.entity_id,
+                        text: entity.friendly_name,
+                        selected: entity.entity_id === selectedEntityId
+                    }))
+                );
+
+            // Initialize Select2 on the Entity ID select element
+            selectEntity.select2({
+                width: '60%',
+                matcher: function (params, data) {
+                    const searchTerm = (params.term || '').toLowerCase().trim();
+                    if ((searchTerm == '') ||
+                        (data.text || '').toLowerCase().indexOf(searchTerm) > -1 ||
+                        (data.id || '').toLowerCase().indexOf(searchTerm) > -1) {
+                        return data;
+                    } else {
+                        return null;
+                    }
+                },
+                templateResult: (entity) => !entity.text ?
+                    `${entity.id}<br>&nbsp;` :
+                    `${entity.text}<br>${entity.id}`,
+                escapeMarkup: (markup) => markup
+            });
+            //.closest('.select2-container').addClass('on-edit-select2-container');
+        }
+
+        function edlist(sbhaNode) {
+            $('#node-input-entities').css('min-height', '150px').css('min-width', '450px').editableList({
+                addButton: true,
+                removable: true,
+                buttons: [{
+                    label: "Scene, motion",
+                    icon: "fa fa-star",
+                    title: "scene when motion",
+                    click: (evt) => $('#node-input-target-actions').editableList('addItem', { name: 'sceneName', type: 'sceneType' })
+                }
+                ],
+                header: $("<div>").append($.parseHTML(`<div style='width:40%; display: inline-grid'>Name</div>
+                                                           <div style='display: inline-grid'>Type</div>`)),
+                addItem: async function (container, i, data) {
+                    if (data === null) {
+                        data = { name: '', type: 'scene' };
+                    }
+                    var row = $('<div/>').appendTo(container);
+                    var name = $('<input type="text" style="width:40%; display: inline-grid">').appendTo(row);
+                    var type = $(`<select style="display: inline-grid">
+                                        <option value="scene">Scene</option>
+                                        <option value="script">Script</option>
+                                      </select>`).appendTo(row);
+                    var entity = $(`<label for="node-input-scene">
+                                        <i class="fa fa-eye"></i> Scene
+                                    </label>
+                                    <select id="node-input-scene"></select>`).appendTo(row);
+                    if (data) {
+                        name.val(data.name);
+                        type.val(data.type);
+
+                        const input_scene = $('#node-input-motion');
+                        loadEntities(input_scene, await fetchDomainEntityList(sbhaNode, 'scene'));
+
+                        // Initialize Select2 on the Entity ID select element
+                        input_scene.select2({
+                            //minimumResultsForSearch: Infinity,
+                            matcher: customMatcher, // Specify the custom matcher function
+                            templateResult: formatEntity,                       // Specify the custom template for displaying entities
+                            escapeMarkup: function (markup) { return markup; }  // Allow rendering HTML in the template
+                        });
+
+                    }
+                    return row;
+                },
+                height: function () {
+                    return 150;
+                },
+                resize: function () {
+                    var rows = $('#node-input-target-actions').editableList('items');
+                    var height = 0;
+                    for (var i = 0; i < rows.length; i++) {
+                        height += $(rows[i]).outerHeight(true);
+                    }
+                    return height;
+                },
+                sortable: true
+            });
+        }
+
+    })();
+</script>
