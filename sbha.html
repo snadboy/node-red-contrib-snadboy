@@ -17,35 +17,36 @@
     </label>
     <input type="text" id="node-input-apiKey" placeholder="API Key">
   </div>
+  test
 </script>
 
 <script type="text/javascript">
-    RED.nodes.registerType('sbha', {
-        category: 'config',
-        defaults: {
-            name: { value: '' },
-            serverUrl: { value: '', required: true },
-            apiKey: { value: '', required: true },
-        },
-        label: function () {
-            return this.name || 'Snadboy Home Assistant'
-        },
-        oneditprepare: function () {
-            $('#node-input-name').val(this.name);
-            $('#node-input-serverUrl').val(this.serverUrl);
-            $('#node-input-apiKey').val(this.apiKey);
-        },
-        oneditsave: function () {
-            console.log(`oneditsave  serverUrl: ${$('#node-input-serverUrl').val()}  apiKey: ${$('#node-input-apiKey').val()}}`)
-            this.name = $('#node-input-name').val();
-            this.serverUrl = $('#node-input-serverUrl').val();
-            this.apiKey = $('#node-input-apiKey').val();
-        },
-        oneditok: function () {
-            console.log(`oneditok  serverUrl: ${$('#node-input-serverUrl').val()}  apiKey: ${$('#node-input-apiKey').val()}}`)
-            this.name = $('#node-input-name').val();
-            this.serverUrl = $('#node-input-serverUrl').val();
-            this.apiKey = $('#node-input-apiKey').val();
-        }
-    });
+  RED.nodes.registerType('sbha', {
+    category: 'config',
+    defaults: {
+      name: { value: '' },
+      serverUrl: { value: '', required: true },
+      apiKey: { value: '', required: true },
+    },
+    label: function () {
+      return this.name || 'Snadboy Home Assistant'
+    },
+    oneditprepare: function () {
+      $('#node-input-name').val(this.name);
+      $('#node-input-serverUrl').val(this.serverUrl);
+      $('#node-input-apiKey').val(this.apiKey);
+    },
+    oneditsave: function () {
+      console.log(`oneditsave  serverUrl: ${$('#node-input-serverUrl').val()}  apiKey: ${$('#node-input-apiKey').val()}}`)
+      this.name = $('#node-input-name').val();
+      this.serverUrl = $('#node-input-serverUrl').val();
+      this.apiKey = $('#node-input-apiKey').val();
+    },
+    oneditok: function () {
+      console.log(`oneditok  serverUrl: ${$('#node-input-serverUrl').val()}  apiKey: ${$('#node-input-apiKey').val()}}`)
+      this.name = $('#node-input-name').val();
+      this.serverUrl = $('#node-input-serverUrl').val();
+      this.apiKey = $('#node-input-apiKey').val();
+    }
+  });
 </script>
