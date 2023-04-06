@@ -4,8 +4,8 @@
     "description": "SnadBoy node-red nodes",
     "node-red": {
         "nodes": {
-            "sbha": "sbha.js",
-            "sbmotion": "sbmotion.js"
+            "sbha": "nodes/sbha/sbha.js",
+            "sbmotion": "nodes/sbmotion/sbmotion.js"
         }
     }
 }
